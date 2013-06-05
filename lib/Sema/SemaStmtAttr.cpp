@@ -44,6 +44,25 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const AttributeList &A,
   return ::new (S.Context) FallThroughAttr(A.getRange(), S.Context);
 }
 
+static Attr *handleThrdRoleGrantAttr(Sema &S, Stmt *St, const AttributeList &A,
+                                     SourceRange Range) {
+  assert(!A.isInvalid());
+  if (!isa<CompoundStmt>(St)) {
+    S.Diag(A.getRange().getBegin(), diag::err_thrdrolegrant_attr_wrong_target) << 0
+    << St->getLocStart();
+    return 0;
+  }
+  // TODO: check that granted roles were declared somewhere
+  
+  // TODO: build the actual attribute
+  return 0;
+}
+
+static Attr *handleThrdRoleRevokeAttr(Sema &S, Stmt *St, const AttributeList &A,
+                                      SourceRange Range) {
+  assert(!A.isInvalid());
+  return 0;
+}
 
 static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,
                                   SourceRange Range) {
@@ -55,6 +74,11 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,
     return 0;
   case AttributeList::AT_FallThrough:
     return handleFallThroughAttr(S, St, A, Range);
+  case AttributeList::AT_ThrdRoleGrant:
+    return handleThrdRoleGrantAttr(S, St, A, Range);
+  case AttributeList::AT_ThrdRoleRevoke:
+    return handleThrdRoleRevokeAttr(S, St, A, Range);
+      
   default:
     // if we're here, then we parsed a known attribute, but didn't recognize
     // it as a statement attribute => it is declaration attribute

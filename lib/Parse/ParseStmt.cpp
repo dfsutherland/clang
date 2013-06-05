@@ -98,6 +98,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement,
 
   ParsedAttributesWithRange Attrs(AttrFactory);
   MaybeParseCXX11Attributes(Attrs, 0, /*MightBeObjCMessageSend*/ true);
+  MaybeParseGNUAttributes(Attrs);
 
   StmtResult Res = ParseStatementOrDeclarationAfterAttributes(Stmts,
                                  OnlyStatement, TrailingElseLoc, Attrs);
@@ -767,6 +768,20 @@ void Parser::ParseCompoundStatementLeadingPragmas() {
     }
   }
 
+}
+
+/// Parse any annotations at the start of the compound expression. We handle
+/// these separately because some annotations (thrd_role_{grant,revoke} must
+/// appear before any C statement in the compound.
+void Parser::ParseCompoundStatementLeadingAnnos(ParsedAttributesWithRange &attrs) {
+  
+  // Nothing to do when thread role analysis is turned off!
+  if (!getLangOpts().ThreadRoleAnalysis)
+    return;
+
+  MaybeParseCXX11Attributes(attrs, 0);
+  MaybeParseGNUAttributes(attrs);
+  
 }
 
 /// ParseCompoundStatementBody - Parse a sequence of statements and invoke the

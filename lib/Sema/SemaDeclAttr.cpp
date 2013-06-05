@@ -28,6 +28,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Debug.h"
 using namespace clang;
 using namespace sema;
 
@@ -4720,6 +4721,145 @@ static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 //===----------------------------------------------------------------------===//
+// Thread Role Analysis specific attribute handlers.
+//===----------------------------------------------------------------------===//
+
+
+static bool checkThrdRoleListCommon(Sema &S, Decl *D,
+                                    const AttributeList &Attr,
+                                    StringRef SE) {
+  assert(!Attr.isInvalid());
+  
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return false;
+  
+  // TODO: Check that string is comma-sep list of plausible thread role names
+
+  // Parse out the comma separated values.
+  SmallVector<StringRef,2> Roles;
+  SE.split(Roles, ",");
+  
+  assert(Roles.size()>0); // we have at least one role
+
+  llvm::StringMap<bool> Uniquer;
+  bool ErrorFree = true;
+  for (SmallVector<StringRef, 2>::iterator I = Roles.begin(), E = Roles.end();
+       I != E; ++I) {
+    const std::string ARole = (*I).trim();
+    llvm::errs() << ARole.c_str() << '\n';
+
+    // TODO: Ensure that the args lack duplicates
+    bool &inserted = Uniquer[ARole];
+    if (inserted) {
+      ErrorFree = false;
+      // TODO: report the error
+      S.Diag(Attr.getLoc(), diag::err_thrdrole_no_duplicates) << ARole << Attr.getName();
+
+      continue;
+    }
+    inserted = true;
+
+    // TODO: ??Build knowledge of names, both declared and not??
+    // not yet...
+    
+  }
+      
+  return ErrorFree;
+}
+
+static void handleThrdRoleIncompatibleAttr(Sema &S, Decl *D,
+                                           const AttributeList &Attr) {
+  
+  
+  const StringRef SR = S.checkThrdRoleListCommon(Attr);
+  
+  if (!SR.empty()) {
+    D->addAttr(::new (S.Context) ThrdRoleIncompatibleAttr(Attr.getRange(),
+                                                          S.Context, SR));
+  }
+  
+}
+
+static void handleThrdRoleUniqueAttr(Sema &S, Decl *D,
+                                     const AttributeList &Attr) {
+  
+  
+  const StringRef SR = S.checkThrdRoleListCommon(Attr);
+  
+  if (!SR.empty()) {
+    D->addAttr(::new (S.Context) ThrdRoleUniqueAttr(Attr.getRange(),
+                                                    S.Context, SR));
+  }
+  
+}
+
+
+enum ThrdRoleSubPartKind {
+  TR_Leaf,
+  TR_Opt_BinOp_Expr,
+  TR_SubExp,
+  TR_Expr
+};
+
+
+static void handleThrdRoleDeclAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return;
+
+  // Make sure that there is a string literal as the sections's single
+  // argument.
+  Expr *ArgExpr = Attr.getArg(0);
+  ArgExpr = ArgExpr->IgnoreParenCasts();
+  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
+
+  if (!SE || !SE->isAscii()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "thrd_role_decl" << 1;
+    return;
+  }
+
+  if (!checkThrdRoleListCommon(S, D, Attr, SE->getString())) {
+    return;
+  }
+//  if (!checkAttributeNumArgs(S, Attr, 1))
+//    return;
+  
+//  if (!isFunctionOrMethod(D))
+//    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+//    << Attr.getRange() << Attr.getName() << ExpectedFunctionOrMethod;
+  
+  
+
+  D->addAttr(::new (S.Context) ThrdRoleDeclAttr(Attr.getRange(), S.Context, SE->getString()));
+
+}
+
+static void handleThrdRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+  if (!checkAttributeNumArgs(S, Attr, 1))
+    return;
+  
+  if (!isFunctionOrMethod(D))
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+    << Attr.getRange() << Attr.getName() << ExpectedFunctionOrMethod;
+  
+  // Make sure that there is a string literal as the sections's single
+  // argument.
+  Expr *ArgExpr = Attr.getArg(0);
+  ArgExpr = ArgExpr->IgnoreParenCasts();
+  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
+  
+  if (!SE || !SE->isAscii()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+    << "uuid" << 1;
+    return;
+  }
+   D->addAttr(::new (S.Context) ThrdRoleAttr(Attr.getRange(), S.Context, SE->getString()));
+
+}
+
+//===----------------------------------------------------------------------===//
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
@@ -5020,6 +5160,17 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_AcquiredAfter:
     handleAcquiredAfterAttr(S, D, Attr);
+    break;
+      
+  //Thread Role Analysis Attributes
+  case AttributeList::AT_ThrdRoleDecl:
+    handleThrdRoleDeclAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_ThrdRole:
+    handleThrdRoleAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_ThrdRoleUnique:
+    handleThrdRoleUniqueAttr(S, D, Attr);
     break;
 
   // Type safety attributes.

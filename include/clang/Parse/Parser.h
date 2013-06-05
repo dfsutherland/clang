@@ -1489,6 +1489,7 @@ private:
   StmtResult ParseCompoundStatement(bool isStmtExpr,
                                     unsigned ScopeFlags);
   void ParseCompoundStatementLeadingPragmas();
+  void ParseCompoundStatementLeadingAnnos(ParsedAttributesWithRange &attrs);
   StmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   bool ParseParenExprOrCondition(ExprResult &ExprResult,
                                  Decl *&DeclResult,
@@ -1900,7 +1901,9 @@ private:
                              AttributeList::Syntax Syntax);
 
   void MaybeParseCXX11Attributes(Declarator &D) {
-    if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
+    if ((getLangOpts().CPlusPlus11 || getLangOpts().ThreadRoleAnalysis)
+        && isCXX11AttributeSpecifier()) {
+      // Compound statements can now have leading annotations to support Thread Role Analysis
       ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
       ParseCXX11Attributes(attrs, &endLoc);
@@ -1908,8 +1911,10 @@ private:
     }
   }
   void MaybeParseCXX11Attributes(ParsedAttributes &attrs,
-                                 SourceLocation *endLoc = 0) {
-    if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
+                                SourceLocation *endLoc = 0) {
+    if ((getLangOpts().CPlusPlus11 || getLangOpts().ThreadRoleAnalysis)
+        && isCXX11AttributeSpecifier()) {
+     // Compound statements can now have leading annotations to support Thread Role Analysis
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
       ParseCXX11Attributes(attrsWithRange, endLoc);
       attrs.takeAllFrom(attrsWithRange);
@@ -1918,8 +1923,9 @@ private:
   void MaybeParseCXX11Attributes(ParsedAttributesWithRange &attrs,
                                  SourceLocation *endLoc = 0,
                                  bool OuterMightBeMessageSend = false) {
-    if (getLangOpts().CPlusPlus11 &&
-        isCXX11AttributeSpecifier(false, OuterMightBeMessageSend))
+    if ((getLangOpts().CPlusPlus11 || getLangOpts().ThreadRoleAnalysis)
+        && isCXX11AttributeSpecifier(false, OuterMightBeMessageSend))
+      // Compound statements can now have leading annotations to support Thread Role Analysis
       ParseCXX11Attributes(attrs, endLoc);
   }
 
