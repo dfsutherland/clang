@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -thrd-role-analysis -triple=i686-linux-gnu -verify
+// RUN: %clang_cc1 %s -fsyntax-only -thrd-role-analysis -triple=i686-linux-gnu -verify
 
 // Basic tests for thread role analysis attributes
 // #define ATTR_THRD_ROLE_DECL(a) [[cert::thrd_role_decl(a)]]
