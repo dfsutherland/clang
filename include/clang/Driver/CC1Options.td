@@ -460,6 +460,14 @@ def fno_deprecated_macro : Flag<["-"], "fno-deprecated-macro">,
   HelpText<"Undefines the __DEPRECATED macro">;
 
 //===----------------------------------------------------------------------===//
+// Thread Role Analysis Options
+//===----------------------------------------------------------------------===//
+def thrd_role_analysis : Flag<["-"], "thrd-role-analysis">,
+  HelpText<"Turn Thread Role Analysis ON">;
+def nothrd_role_analysis : Flag<["-"], "nothrd-role-analysis">,
+  HelpText<"Turn Thread Role Analysis OFF">;
+
+//===----------------------------------------------------------------------===//
 // Header Search Options
 //===----------------------------------------------------------------------===//
 

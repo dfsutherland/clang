@@ -4725,19 +4725,30 @@ static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 //===----------------------------------------------------------------------===//
 
 
-static bool checkThrdRoleListCommon(Sema &S, Decl *D,
-                                    const AttributeList &Attr,
-                                    StringRef SE) {
+static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
+                                         const AttributeList &Attr) {
   assert(!Attr.isInvalid());
-  
   if (!checkAttributeNumArgs(S, Attr, 1))
-    return false;
+    return 0;
+
+  // Make sure that there is a string literal as the sections's single
+  // argument.
+  Expr *ArgExpr = Attr.getArg(0);
+  ArgExpr = ArgExpr->IgnoreParenCasts();
+  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
+
+  if (!SE || !SE->isAscii()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "thrd_role_decl" << 1;
+    return 0;
+  }
+
   
   // TODO: Check that string is comma-sep list of plausible thread role names
 
   // Parse out the comma separated values.
   SmallVector<StringRef,2> Roles;
-  SE.split(Roles, ",");
+  SE->getString().split(Roles, ",");
   
   assert(Roles.size()>0); // we have at least one role
 
@@ -4764,14 +4775,14 @@ static bool checkThrdRoleListCommon(Sema &S, Decl *D,
     
   }
       
-  return ErrorFree;
+  return ErrorFree ? SE->getString() : 0;
 }
 
 static void handleThrdRoleIncompatibleAttr(Sema &S, Decl *D,
                                            const AttributeList &Attr) {
   
   
-  const StringRef SR = S.checkThrdRoleListCommon(Attr);
+  const StringRef SR = checkThrdRoleListCommon(S, D, Attr);
   
   if (!SR.empty()) {
     D->addAttr(::new (S.Context) ThrdRoleIncompatibleAttr(Attr.getRange(),
@@ -4784,7 +4795,7 @@ static void handleThrdRoleUniqueAttr(Sema &S, Decl *D,
                                      const AttributeList &Attr) {
   
   
-  const StringRef SR = S.checkThrdRoleListCommon(Attr);
+  const StringRef SR = checkThrdRoleListCommon(S, D, Attr);
   
   if (!SR.empty()) {
     D->addAttr(::new (S.Context) ThrdRoleUniqueAttr(Attr.getRange(),
@@ -4803,23 +4814,9 @@ enum ThrdRoleSubPartKind {
 
 
 static void handleThrdRoleDeclAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-  if (!checkAttributeNumArgs(S, Attr, 1))
-    return;
-
-  // Make sure that there is a string literal as the sections's single
-  // argument.
-  Expr *ArgExpr = Attr.getArg(0);
-  ArgExpr = ArgExpr->IgnoreParenCasts();
-  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
-
-  if (!SE || !SE->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "thrd_role_decl" << 1;
-    return;
-  }
-
-  if (!checkThrdRoleListCommon(S, D, Attr, SE->getString())) {
+  StringRef SE = checkThrdRoleListCommon(S, D, Attr);
+  
+  if (SE == 0) {
     return;
   }
 //  if (!checkAttributeNumArgs(S, Attr, 1))
@@ -4831,7 +4828,7 @@ static void handleThrdRoleDeclAttr(Sema &S, Decl *D, const AttributeList &Attr) 
   
   
 
-  D->addAttr(::new (S.Context) ThrdRoleDeclAttr(Attr.getRange(), S.Context, SE->getString()));
+  D->addAttr(::new (S.Context) ThrdRoleDeclAttr(Attr.getRange(), S.Context, SE));
 
 }
 
