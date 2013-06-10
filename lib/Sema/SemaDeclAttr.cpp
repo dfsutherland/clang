@@ -4816,7 +4816,7 @@ enum ThrdRoleSubPartKind {
 static void handleThrdRoleDeclAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   StringRef SE = checkThrdRoleListCommon(S, D, Attr);
   
-  if (SE == 0) {
+  if (SE.empty()) {
     return;
   }
 //  if (!checkAttributeNumArgs(S, Attr, 1))
