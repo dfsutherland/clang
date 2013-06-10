@@ -4729,7 +4729,7 @@ static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
   assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 1))
-    return 0;
+    return StringRef();
 
   // Make sure that there is a string literal as the sections's single
   // argument.
@@ -4740,9 +4740,8 @@ static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
       << "thrd_role_decl" << 1;
-    return 0;
+    return StringRef();
   }
-
   
   // TODO: Check that string is comma-sep list of plausible thread role names
 
@@ -4775,7 +4774,7 @@ static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
     
   }
       
-  return ErrorFree ? SE->getString() : 0;
+  return ErrorFree ? SE->getString() : StringRef();
 }
 
 static void handleThrdRoleIncompatibleAttr(Sema &S, Decl *D,
