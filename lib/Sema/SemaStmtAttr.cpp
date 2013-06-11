@@ -44,24 +44,49 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const AttributeList &A,
   return ::new (S.Context) FallThroughAttr(A.getRange(), S.Context);
 }
 
-static Attr *handleThrdRoleGrantAttr(Sema &S, Stmt *St, const AttributeList &A,
+static Attr *handleThrdRoleGrantAttr(Sema &S, Stmt *St, 
+                                     const AttributeList &Attr,
                                      SourceRange Range) {
-  assert(!A.isInvalid());
+  assert(!Attr.isInvalid());
   if (!isa<CompoundStmt>(St)) {
-    S.Diag(A.getRange().getBegin(), diag::err_thrdrolegrant_attr_wrong_target) << 0
-    << St->getLocStart();
+    S.Diag(Attr.getRange().getBegin(), 
+           diag::err_thrdrolegrant_attr_wrong_target)
+      << 0 << St->getLocStart();
     return 0;
   }
   // TODO: check that granted roles were declared somewhere
   
-  // TODO: build the actual attribute
-  return 0;
+  Expr *ArgExpr = Attr.getArg(0);
+  ArgExpr = ArgExpr->IgnoreParenCasts();
+  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
+
+  if (!SE || !SE->isAscii()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "thrd_role_decl" << 1;
+    return 0;
+  }
+
+  return ::new (S.Context) ThrdRoleGrantAttr(Attr.getRange(), S.Context,
+                                             SE->getString());
 }
 
-static Attr *handleThrdRoleRevokeAttr(Sema &S, Stmt *St, const AttributeList &A,
+static Attr *handleThrdRoleRevokeAttr(Sema &S, Stmt *St,
+                                      const AttributeList &Attr,
                                       SourceRange Range) {
-  assert(!A.isInvalid());
-  return 0;
+  assert(!Attr.isInvalid());
+
+  Expr *ArgExpr = Attr.getArg(0);
+  ArgExpr = ArgExpr->IgnoreParenCasts();
+  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
+
+  if (!SE || !SE->isAscii()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "thrd_role_decl" << 1;
+    return 0;
+  }
+
+  return ::new (S.Context) ThrdRoleRevokeAttr(Attr.getRange(), S.Context,
+                                              SE->getString());
 }
 
 static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,
