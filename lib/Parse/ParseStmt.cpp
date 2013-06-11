@@ -689,12 +689,6 @@ StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
   return ParseCompoundStatement(isStmtExpr, Scope::DeclScope);
 }
 
-StmtResult Parser::ParseCompoundStatement(bool IsStmtExpr,
-                                          unsigned ScopeFlags) {
-  return ParseCompoundStatement(IsStmtExpr, ScopeFlags, 
-                                ParsedAttributesWithRange(AttrFactory));
-}
-
 /// ParseCompoundStatement - Parse a "{}" block.
 ///
 ///       compound-statement: [C99 6.8.2]
@@ -722,8 +716,8 @@ StmtResult Parser::ParseCompoundStatement(bool IsStmtExpr,
 /// [OMP]   barrier-directive
 /// [OMP]   flush-directive
 ///
-StmtResult Parser::ParseCompoundStatement(bool isStmtExpr, unsigned ScopeFlags,
-                                          ParsedAttributesWithRange& Attrs) {
+StmtResult Parser::ParseCompoundStatement(bool isStmtExpr,
+                                          unsigned ScopeFlags) {
   assert(Tok.is(tok::l_brace) && "Not a compount stmt!");
 
   // Enter a scope to hold everything within the compound stmt.  Compound
@@ -731,10 +725,7 @@ StmtResult Parser::ParseCompoundStatement(bool isStmtExpr, unsigned ScopeFlags,
   ParseScope CompoundScope(this, ScopeFlags);
 
   // Parse the statements in the body.
-  StmtResult R = ParseCompoundStatementBody(isStmtExpr);
-  if (!R.isInvalid() && !Attrs.empty())
-    R = Actions.ProcessStmtAttributes(R.get(), Attrs.getList(), Attrs.Range);
-  return R;
+  return ParseCompoundStatementBody(isStmtExpr);
 }
 
 /// Parse any pragmas at the start of the compound expression. We handle these
