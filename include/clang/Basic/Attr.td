@@ -943,47 +943,35 @@ def TypeTagForDatatype : InheritableAttr {
 // Thread Role Analysis-related attributes
 
 def ThrdRoleDecl : InheritableAttr {
-  let Spellings = [CXX11<"", "thrd_role_decl">,
-                   CXX11<"cert", "thrd_role_decl">,
-                   GNU<"thrd_role_decl">];
+  let Spellings = [CXX11<"cert", "thrd_role_decl">];
   let Args = [StringArgument<"Decls">];
 }
 
 def ThrdRole : InheritableAttr {
-  let Spellings = [CXX11<"", "thrd_role">,
-                   CXX11<"cert", "thrd_role">,  
-                   GNU<"thrd_role">];
+  let Spellings = [CXX11<"cert", "thrd_role">];
   let Args = [StringArgument<"Expr">];
   let Subjects = [Function];
 }
 
 def ThrdRoleGrant : Attr {
-  let Spellings = [CXX11<"", "thrd_role_grant">,
-                   CXX11<"cert", "thrd_role_grant">,
-                   GNU<"thrd_role_grant">];
+  let Spellings = [CXX11<"cert", "thrd_role_grant">];
   let Args = [StringArgument<"RoleList">];
   let Subjects = [CompoundStmt];
 }
 
 def ThrdRoleRevoke : Attr {
-  let Spellings = [CXX11<"", "thrd_role_revoke">,
-                   CXX11<"cert", "thrd_role_revoke">,
-                   GNU<"thrd_role_revoke">];
+  let Spellings = [CXX11<"cert", "thrd_role_revoke">];
   let Args = [StringArgument<"RoleList">];
   let Subjects = [CompoundStmt];
 }
 
 def ThrdRoleIncompatible : Attr {
-  let Spellings = [CXX11<"", "thrd_role_incompatible">,
-                   CXX11<"cert", "thrd_role_incompatible">,
-                   GNU<"thrd_role_incompatible">];
+  let Spellings = [CXX11<"cert", "thrd_role_incompatible">];
   let Args = [StringArgument<"RoleList">];
 }
 
 def ThrdRoleUnique : Attr {
-  let Spellings = [CXX11<"", "thrd_role_unique">,
-                   CXX11<"cert", "thrd_role_unique">,
-                   GNU<"thrd_role_unique">];
+  let Spellings = [CXX11<"cert", "thrd_role_unique">];
   let Args = [StringArgument<"RoleList">];                   
 }
 
