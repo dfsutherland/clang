@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -thrd-role-analysis -triple=i686-linux-gnu -verify
+// RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -thrd-role-analysis -verify
 // expected-no-diagnostics
 
 // The thread_role_decl should attach to the function declaration,

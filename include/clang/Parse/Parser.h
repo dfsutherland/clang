@@ -1901,7 +1901,7 @@ private:
                              AttributeList::Syntax Syntax);
 
   void MaybeParseCXX11Attributes(Declarator &D) {
-    if ((getLangOpts().CPlusPlus11 || getLangOpts().ThreadRoleAnalysis)
+    if ((getLangOpts().CPlusPlus11 || getLangOpts().CXXAttributes)
         && isCXX11AttributeSpecifier()) {
       // Compound statements can now have leading annotations to support Thread Role Analysis
       ParsedAttributesWithRange attrs(AttrFactory);
@@ -1912,7 +1912,7 @@ private:
   }
   void MaybeParseCXX11Attributes(ParsedAttributes &attrs,
                                 SourceLocation *endLoc = 0) {
-    if ((getLangOpts().CPlusPlus11 || getLangOpts().ThreadRoleAnalysis)
+    if ((getLangOpts().CPlusPlus11 || getLangOpts().CXXAttributes)
         && isCXX11AttributeSpecifier()) {
      // Compound statements can now have leading annotations to support Thread Role Analysis
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
@@ -1923,7 +1923,7 @@ private:
   void MaybeParseCXX11Attributes(ParsedAttributesWithRange &attrs,
                                  SourceLocation *endLoc = 0,
                                  bool OuterMightBeMessageSend = false) {
-    if ((getLangOpts().CPlusPlus11 || getLangOpts().ThreadRoleAnalysis)
+    if ((getLangOpts().CPlusPlus11 || getLangOpts().CXXAttributes)
         && isCXX11AttributeSpecifier(false, OuterMightBeMessageSend))
       // Compound statements can now have leading annotations to support Thread Role Analysis
       ParseCXX11Attributes(attrs, endLoc);

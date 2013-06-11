@@ -1132,7 +1132,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   if (Args.hasArg(OPT_fno_operator_names))
     Opts.CXXOperatorNames = 0;
-
+  
   if (Opts.ObjC1) {
     if (Arg *arg = Args.getLastArg(OPT_fobjc_runtime_EQ)) {
       StringRef value = arg->getValue();
@@ -1232,6 +1232,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.CXXExceptions = Args.hasArg(OPT_fcxx_exceptions);
   Opts.SjLjExceptions = Args.hasArg(OPT_fsjlj_exceptions);
   Opts.TraditionalCPP = Args.hasArg(OPT_traditional_cpp);
+  Opts.CXXAttributes = Args.hasArg(OPT_fcxx_attributes);
 
   Opts.RTTI = !Args.hasArg(OPT_fno_rtti);
   Opts.Blocks = Args.hasArg(OPT_fblocks);

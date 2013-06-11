@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -thrd-role-analysis -triple=i686-linux-gnu -verify
+// RUN: %clang_cc1 %s -fsyntax-only -thrd-role-analysis -fcxx-attributes -verify
 
 int a __attribute__((thrd_role_decl("GUI, Compute")));
 int b __attribute__((thrd_role_decl()));  // expected-error {{attribute takes one argument}}

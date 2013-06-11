@@ -3225,7 +3225,7 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
 ///       attribute-specifier-seq[opt] attribute-specifier
 void Parser::ParseCXX11Attributes(ParsedAttributesWithRange &attrs,
                                   SourceLocation *endLoc) {
-  assert(getLangOpts().CPlusPlus11);
+  assert(getLangOpts().CPlusPlus11 || getLangOpts().CXXAttributes);
 
   SourceLocation StartLoc = Tok.getLocation(), Loc;
   if (!endLoc)
