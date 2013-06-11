@@ -3180,11 +3180,25 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
         << AttrName << SourceRange(SeenAttrs[AttrName]);
 
     // Parse attribute arguments
+    Expr *Args = 0;
+    unsigned int NumArgs = 0;
     if (Tok.is(tok::l_paren)) {
       if (ScopeName && ScopeName->getName() == "gnu") {
         ParseGNUAttributeArgs(AttrName, AttrLoc, attrs, endLoc,
                               ScopeName, ScopeLoc, AttributeList::AS_CXX11);
         AttrParsed = true;
+      } else if (ScopeName && ScopeName->getName() == "cert") {
+        BalancedDelimiterTracker T(*this, tok::l_paren);
+        T.consumeOpen();
+
+        ExprResult ArgExpr(ParseConstantExpression());
+        if (!ArgExpr.isInvalid()) {
+          Args = ArgExpr.take();
+          NumArgs = 1;
+        }
+
+        if (T.consumeClose())
+          T.skipToEnd();
       } else {
         if (StandardAttr)
           Diag(Tok.getLocation(), diag::err_cxx11_attribute_forbids_arguments)
@@ -3201,7 +3215,7 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
                    SourceRange(ScopeLoc.isValid() ? ScopeLoc : AttrLoc,
                                AttrLoc),
                    ScopeName, ScopeLoc, 0,
-                   SourceLocation(), 0, 0, AttributeList::AS_CXX11);
+                   SourceLocation(), &Args, NumArgs, AttributeList::AS_CXX11);
 
     if (Tok.is(tok::ellipsis)) {
       ConsumeToken();
