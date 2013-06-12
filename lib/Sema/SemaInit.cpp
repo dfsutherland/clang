@@ -236,7 +236,6 @@ class InitListChecker {
   Sema &SemaRef;
   bool hadError;
   bool VerifyOnly; // no diagnostics, no structure building
-  bool AllowBraceElision;
   llvm::DenseMap<InitListExpr *, InitListExpr *> SyntacticToSemantic;
   InitListExpr *FullyStructuredList;
 
@@ -327,8 +326,7 @@ class InitListChecker {
 
 public:
   InitListChecker(Sema &S, const InitializedEntity &Entity,
-                  InitListExpr *IL, QualType &T, bool VerifyOnly,
-                  bool AllowBraceElision);
+                  InitListExpr *IL, QualType &T, bool VerifyOnly);
   bool HadError() { return hadError; }
 
   // @brief Retrieves the fully-structured initializer list used for
@@ -559,8 +557,8 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
 
 InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
                                  InitListExpr *IL, QualType &T,
-                                 bool VerifyOnly, bool AllowBraceElision)
-  : SemaRef(S), VerifyOnly(VerifyOnly), AllowBraceElision(AllowBraceElision) {
+                                 bool VerifyOnly)
+  : SemaRef(S), VerifyOnly(VerifyOnly) {
   hadError = false;
 
   unsigned newIndex = 0;
@@ -645,10 +643,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
                         StructuredSubobjectInitList,
                         StructuredSubobjectInitIndex);
 
-  if (VerifyOnly) {
-    if (!AllowBraceElision && (T->isArrayType() || T->isRecordType()))
-      hadError = true;
-  } else {
+  if (!VerifyOnly) {
     StructuredSubobjectInitList->setType(T);
 
     unsigned EndIndex = (Index == StartIndex? StartIndex : Index - 1);
@@ -663,8 +658,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
     // Complain about missing braces.
     if (T->isArrayType() || T->isRecordType()) {
       SemaRef.Diag(StructuredSubobjectInitList->getLocStart(),
-                    AllowBraceElision ? diag::warn_missing_braces :
-                                        diag::err_missing_braces)
+                   diag::warn_missing_braces)
         << StructuredSubobjectInitList->getSourceRange()
         << FixItHint::CreateInsertion(
               StructuredSubobjectInitList->getLocStart(), "{")
@@ -672,8 +666,6 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
               SemaRef.PP.getLocForEndOfToken(
                                       StructuredSubobjectInitList->getLocEnd()),
               "}");
-      if (!AllowBraceElision)
-        hadError = true;
     }
   }
 }
@@ -2083,6 +2075,64 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     DesignatedEndIndex.setIsUnsigned(true);
   }
 
+  if (!VerifyOnly && StructuredList->isStringLiteralInit()) {
+    // We're modifying a string literal init; we have to decompose the string
+    // so we can modify the individual characters.
+    ASTContext &Context = SemaRef.Context;
+    Expr *SubExpr = StructuredList->getInit(0)->IgnoreParens();
+
+    // Compute the character type
+    QualType CharTy = AT->getElementType();
+
+    // Compute the type of the integer literals.
+    QualType PromotedCharTy = CharTy;
+    if (CharTy->isPromotableIntegerType())
+      PromotedCharTy = Context.getPromotedIntegerType(CharTy);
+    unsigned PromotedCharTyWidth = Context.getTypeSize(PromotedCharTy);
+
+    if (StringLiteral *SL = dyn_cast<StringLiteral>(SubExpr)) {
+      // Get the length of the string.
+      uint64_t StrLen = SL->getLength();
+      if (cast<ConstantArrayType>(AT)->getSize().ult(StrLen))
+        StrLen = cast<ConstantArrayType>(AT)->getSize().getZExtValue();
+      StructuredList->resizeInits(Context, StrLen);
+
+      // Build a literal for each character in the string, and put them into
+      // the init list.
+      for (unsigned i = 0, e = StrLen; i != e; ++i) {
+        llvm::APInt CodeUnit(PromotedCharTyWidth, SL->getCodeUnit(i));
+        Expr *Init = new (Context) IntegerLiteral(
+            Context, CodeUnit, PromotedCharTy, SubExpr->getExprLoc());
+        if (CharTy != PromotedCharTy)
+          Init = ImplicitCastExpr::Create(Context, CharTy, CK_IntegralCast,
+                                          Init, 0, VK_RValue);
+        StructuredList->updateInit(Context, i, Init);
+      }
+    } else {
+      ObjCEncodeExpr *E = cast<ObjCEncodeExpr>(SubExpr);
+      std::string Str;
+      Context.getObjCEncodingForType(E->getEncodedType(), Str);
+
+      // Get the length of the string.
+      uint64_t StrLen = Str.size();
+      if (cast<ConstantArrayType>(AT)->getSize().ult(StrLen))
+        StrLen = cast<ConstantArrayType>(AT)->getSize().getZExtValue();
+      StructuredList->resizeInits(Context, StrLen);
+
+      // Build a literal for each character in the string, and put them into
+      // the init list.
+      for (unsigned i = 0, e = StrLen; i != e; ++i) {
+        llvm::APInt CodeUnit(PromotedCharTyWidth, Str[i]);
+        Expr *Init = new (Context) IntegerLiteral(
+            Context, CodeUnit, PromotedCharTy, SubExpr->getExprLoc());
+        if (CharTy != PromotedCharTy)
+          Init = ImplicitCastExpr::Create(Context, CharTy, CK_IntegralCast,
+                                          Init, 0, VK_RValue);
+        StructuredList->updateInit(Context, i, Init);
+      }
+    }
+  }
+
   // Make sure that our non-designated initializer list has space
   // for a subobject corresponding to this array element.
   if (!VerifyOnly &&
@@ -3157,8 +3207,7 @@ static void TryReferenceListInitialization(Sema &S,
                                            const InitializedEntity &Entity,
                                            const InitializationKind &Kind,
                                            InitListExpr *InitList,
-                                           InitializationSequence &Sequence)
-{
+                                           InitializationSequence &Sequence) {
   // First, catch C++03 where this isn't possible.
   if (!S.getLangOpts().CPlusPlus11) {
     Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
@@ -3277,9 +3326,7 @@ static void TryListInitialization(Sema &S,
   }
 
   InitListChecker CheckInitList(S, Entity, InitList,
-          DestType, /*VerifyOnly=*/true,
-          Kind.getKind() != InitializationKind::IK_DirectList ||
-            !S.getLangOpts().CPlusPlus11);
+          DestType, /*VerifyOnly=*/true);
   if (CheckInitList.HadError()) {
     Sequence.SetFailed(InitializationSequence::FK_ListInitializationFailed);
     return;
@@ -5226,7 +5273,7 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
       Init->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments));
 
   if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
-    if (ILE->initializesStdInitializerList()) {
+    if (ILE->initializesStdInitializerList() || ILE->getType()->isArrayType()) {
       // FIXME: If this is an InitListExpr which creates a std::initializer_list
       //        object, we also need to lifetime-extend the underlying array
       //        itself. Fix the representation to explicitly materialize an
@@ -5236,7 +5283,7 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
       return;
     }
 
-    CXXRecordDecl *RD = Init->getType()->getAsCXXRecordDecl();
+    CXXRecordDecl *RD = ILE->getType()->getAsCXXRecordDecl();
     if (RD) {
       assert(RD->isAggregate() && "aggregate init on non-aggregate");
 
@@ -5695,9 +5742,7 @@ InitializationSequence::Perform(Sema &S,
       InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(Ty);
       InitializedEntity InitEntity = IsTemporary ? TempEntity : Entity;
       InitListChecker PerformInitList(S, InitEntity,
-          InitList, Ty, /*VerifyOnly=*/false,
-          Kind.getKind() != InitializationKind::IK_DirectList ||
-            !S.getLangOpts().CPlusPlus11);
+          InitList, Ty, /*VerifyOnly=*/false);
       if (PerformInitList.HadError())
         return ExprError();
 
@@ -6381,9 +6426,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     InitListExpr* InitList = cast<InitListExpr>(Args[0]);
     QualType DestType = Entity.getType();
     InitListChecker DiagnoseInitList(S, Entity, InitList,
-            DestType, /*VerifyOnly=*/false,
-            Kind.getKind() != InitializationKind::IK_DirectList ||
-              !S.getLangOpts().CPlusPlus11);
+            DestType, /*VerifyOnly=*/false);
     assert(DiagnoseInitList.HadError() &&
            "Inconsistent init list check result.");
     break;
