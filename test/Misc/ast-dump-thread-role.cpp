@@ -1,13 +1,13 @@
-// RUN: %clang_cc1 -std=c++11 -thrd-role-analysis -ast-dump %s | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 -std=c++11 -thread-role-analysis -ast-dump %s | FileCheck -strict-whitespace %s
 
 void func2() {
-  if (true) [[cert::thrd_role_grant("Worker")]] {
+  if (true) [[cert::thread_role_grant("Worker")]] {
   // CHECK:       AttributedStmt{{.*}}
-  // CHECK-NEXT:  ThrdRoleGrantAttr{{.*}} "Worker"
+  // CHECK-NEXT:  ThreadRoleGrantAttr{{.*}} "Worker"
   // CHECK-NEXT:  CompoundStmt{{.*}}
-  } else [[cert::thrd_role_grant("GUI")]] {
+  } else [[cert::thread_role_grant("GUI")]] {
   // CHECK:       AttributedStmt{{.*}}
-  // CHECK-NEXT:  ThrdRoleGrantAttr{{.*}} "GUI"
+  // CHECK-NEXT:  ThreadRoleGrantAttr{{.*}} "GUI"
   // CHECK-NEXT:  CompoundStmt{{.*}}
   }
 }

@@ -2170,10 +2170,10 @@ def warn_thread_safety_beta : Warning<
   "Thread safety beta warning.">, InGroup<ThreadSafetyBeta>, DefaultIgnore;
 
 // Thread Role Analysis Errors
-def err_thrdrolegrant_attr_wrong_target : Error<
-  "cert::thrd_role_%select{grant|revoke}1 attribute is allowed only on "
+def err_thread_role_grant_attr_wrong_target : Error<
+  "cert::thread_role_%select{grant|revoke}1 attribute is allowed only on "
   "empty statements">;
-def err_thrdrole_no_duplicates : Error<
+def err_thread_role_no_duplicates : Error<
   "duplicate name '%0' found in cert::%1">;
 
 def warn_impcast_vector_scalar : Warning<

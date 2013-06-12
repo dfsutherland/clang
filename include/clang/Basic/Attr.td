@@ -942,36 +942,36 @@ def TypeTagForDatatype : InheritableAttr {
 
 // Thread Role Analysis-related attributes
 
-def ThrdRoleDecl : InheritableAttr {
-  let Spellings = [CXX11<"cert", "thrd_role_decl">];
+def ThreadRoleDecl : InheritableAttr {
+  let Spellings = [CXX11<"cert", "thread_role_decl">];
   let Args = [StringArgument<"Decls">];
 }
 
-def ThrdRole : InheritableAttr {
-  let Spellings = [CXX11<"cert", "thrd_role">];
+def ThreadRole : InheritableAttr {
+  let Spellings = [CXX11<"cert", "thread_role">];
   let Args = [StringArgument<"Expr">];
   let Subjects = [Function];
 }
 
-def ThrdRoleGrant : Attr {
-  let Spellings = [CXX11<"cert", "thrd_role_grant">];
+def ThreadRoleGrant : Attr {
+  let Spellings = [CXX11<"cert", "thread_role_grant">];
   let Args = [StringArgument<"RoleList">];
   let Subjects = [CompoundStmt];
 }
 
-def ThrdRoleRevoke : Attr {
-  let Spellings = [CXX11<"cert", "thrd_role_revoke">];
+def ThreadRoleRevoke : Attr {
+  let Spellings = [CXX11<"cert", "thread_role_revoke">];
   let Args = [StringArgument<"RoleList">];
   let Subjects = [CompoundStmt];
 }
 
-def ThrdRoleIncompatible : Attr {
-  let Spellings = [CXX11<"cert", "thrd_role_incompatible">];
+def ThreadRoleIncompatible : Attr {
+  let Spellings = [CXX11<"cert", "thread_role_incompatible">];
   let Args = [StringArgument<"RoleList">];
 }
 
-def ThrdRoleUnique : Attr {
-  let Spellings = [CXX11<"cert", "thrd_role_unique">];
+def ThreadRoleUnique : Attr {
+  let Spellings = [CXX11<"cert", "thread_role_unique">];
   let Args = [StringArgument<"RoleList">];                   
 }
 

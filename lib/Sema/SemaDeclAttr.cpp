@@ -4725,8 +4725,8 @@ static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 //===----------------------------------------------------------------------===//
 
 
-static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
-                                         const AttributeList &Attr) {
+static StringRef checkThreadRoleListCommon(Sema &S, Decl *D,
+                                           const AttributeList &Attr) {
   assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 1))
     return StringRef();
@@ -4739,7 +4739,7 @@ static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
 
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "thrd_role_decl" << 1;
+      << "thread_role_decl" << 1;
     return StringRef();
   }
   
@@ -4763,7 +4763,7 @@ static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
     if (inserted) {
       ErrorFree = false;
       // TODO: report the error
-      S.Diag(Attr.getLoc(), diag::err_thrdrole_no_duplicates) << ARole << Attr.getName();
+      S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates) << ARole << Attr.getName();
 
       continue;
     }
@@ -4777,34 +4777,34 @@ static StringRef checkThrdRoleListCommon(Sema &S, Decl *D,
   return ErrorFree ? SE->getString() : StringRef();
 }
 
-static void handleThrdRoleIncompatibleAttr(Sema &S, Decl *D,
-                                           const AttributeList &Attr) {
+static void handleThreadRoleIncompatibleAttr(Sema &S, Decl *D,
+                                             const AttributeList &Attr) {
   
   
-  const StringRef SR = checkThrdRoleListCommon(S, D, Attr);
+  const StringRef SR = checkThreadRoleListCommon(S, D, Attr);
   
   if (!SR.empty()) {
-    D->addAttr(::new (S.Context) ThrdRoleIncompatibleAttr(Attr.getRange(),
-                                                          S.Context, SR));
+    D->addAttr(::new (S.Context) ThreadRoleIncompatibleAttr(Attr.getRange(),
+                                                            S.Context, SR));
   }
   
 }
 
-static void handleThrdRoleUniqueAttr(Sema &S, Decl *D,
-                                     const AttributeList &Attr) {
+static void handleThreadRoleUniqueAttr(Sema &S, Decl *D,
+                                      const AttributeList &Attr) {
   
   
-  const StringRef SR = checkThrdRoleListCommon(S, D, Attr);
+  const StringRef SR = checkThreadRoleListCommon(S, D, Attr);
   
   if (!SR.empty()) {
-    D->addAttr(::new (S.Context) ThrdRoleUniqueAttr(Attr.getRange(),
-                                                    S.Context, SR));
+    D->addAttr(::new (S.Context) ThreadRoleUniqueAttr(Attr.getRange(),
+                                                      S.Context, SR));
   }
   
 }
 
 
-enum ThrdRoleSubPartKind {
+enum ThreadRoleSubPartKind {
   TR_Leaf,
   TR_Opt_BinOp_Expr,
   TR_SubExp,
@@ -4812,8 +4812,9 @@ enum ThrdRoleSubPartKind {
 };
 
 
-static void handleThrdRoleDeclAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  StringRef SE = checkThrdRoleListCommon(S, D, Attr);
+static void handleThreadRoleDeclAttr(Sema &S, Decl *D,
+                                     const AttributeList &Attr) {
+  StringRef SE = checkThreadRoleListCommon(S, D, Attr);
   
   if (SE.empty()) {
     return;
@@ -4827,11 +4828,11 @@ static void handleThrdRoleDeclAttr(Sema &S, Decl *D, const AttributeList &Attr) 
   
   
 
-  D->addAttr(::new (S.Context) ThrdRoleDeclAttr(Attr.getRange(), S.Context, SE));
-
+  D->addAttr(::new (S.Context) ThreadRoleDeclAttr(Attr.getRange(), S.Context,
+                                                  SE));
 }
 
-static void handleThrdRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+static void handleThreadRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 1))
     return;
@@ -4851,8 +4852,8 @@ static void handleThrdRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     << "uuid" << 1;
     return;
   }
-   D->addAttr(::new (S.Context) ThrdRoleAttr(Attr.getRange(), S.Context, SE->getString()));
-
+   D->addAttr(::new (S.Context) ThreadRoleAttr(Attr.getRange(), S.Context,
+                                               SE->getString()));
 }
 
 //===----------------------------------------------------------------------===//
@@ -5159,14 +5160,14 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
       
   //Thread Role Analysis Attributes
-  case AttributeList::AT_ThrdRoleDecl:
-    handleThrdRoleDeclAttr(S, D, Attr);
+  case AttributeList::AT_ThreadRoleDecl:
+    handleThreadRoleDeclAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ThrdRole:
-    handleThrdRoleAttr(S, D, Attr);
+  case AttributeList::AT_ThreadRole:
+    handleThreadRoleAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ThrdRoleUnique:
-    handleThrdRoleUniqueAttr(S, D, Attr);
+  case AttributeList::AT_ThreadRoleUnique:
+    handleThreadRoleUniqueAttr(S, D, Attr);
     break;
 
   // Type safety attributes.
