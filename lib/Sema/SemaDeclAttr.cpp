@@ -4725,11 +4725,12 @@ static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 //===----------------------------------------------------------------------===//
 
 
-static StringRef checkThreadRoleListCommon(Sema &S, Decl *D,
-                                           const AttributeList &Attr) {
+static bool checkThreadRoleListCommon(Sema &S, Decl *D,
+                                      const AttributeList &Attr,
+                                      StringRef &Role) {
   assert(!Attr.isInvalid());
   if (!checkAttributeNumArgs(S, Attr, 1))
-    return StringRef();
+    return true;
 
   // Make sure that there is a string literal as the sections's single
   // argument.
@@ -4739,76 +4740,61 @@ static StringRef checkThreadRoleListCommon(Sema &S, Decl *D,
 
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << Attr.getName() << 1;
-    return StringRef();
+      << Attr.getName()->getName() << 1;
+    return true;
   }
   
-  // Check that string is comma-sep list of plausible thread role names
-  // list of roles must be non-empty
+  // Check that string is a non-empty, comma-separated list of plausible thread
+  // role names.
   if (SE->getLength() == 0) {
-    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list)
-    << Attr.getName();
-    
-    return StringRef();
+    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list) << Attr.getName();    
+    return true;
   }
-
 
   // Parse out the comma separated values.
   SmallVector<StringRef,2> Roles;
   SE->getString().split(Roles, ",");
   
   llvm::StringMap<bool> Uniquer;
-  bool ErrorFree = true;
+  bool Duplicates = false;
   for (SmallVector<StringRef, 2>::iterator I = Roles.begin(), E = Roles.end();
        I != E; ++I) {
     const std::string ARole = (*I).trim();
-    llvm::errs() << ARole.c_str() << '\n';
 
-    // Ensure that the args lack duplicates
+    // Ensure that the args lack duplicates.
     bool &inserted = Uniquer[ARole];
     if (inserted) {
-      ErrorFree = false;
-      // Found a duplicate role
-      S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates) << ARole << Attr.getName();
-
+      Duplicates = true;
+      // Found a duplicate role.
+      S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates)
+        << ARole << Attr.getName();
       continue;
     }
     inserted = true;
 
     // TODO: ??Build knowledge of names, both declared and not??
-    // not yet...
-    
+    // not yet...    
   }
-      
-  return ErrorFree ? SE->getString() : StringRef();
+
+  Role = SE->getString();
+  return Duplicates;
 }
 
 static void handleThreadRoleIncompatibleAttr(Sema &S, Decl *D,
                                              const AttributeList &Attr) {
-  
-  
-  const StringRef SR = checkThreadRoleListCommon(S, D, Attr);
-  
-  if (!SR.empty()) {
+  StringRef SR;
+  if (!checkThreadRoleListCommon(S, D, Attr, SR))
     D->addAttr(::new (S.Context) ThreadRoleIncompatibleAttr(Attr.getRange(),
                                                             S.Context, SR));
-  }
-  
 }
 
 static void handleThreadRoleUniqueAttr(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
-  
-  
-  const StringRef SR = checkThreadRoleListCommon(S, D, Attr);
-  
-  if (!SR.empty()) {
+  StringRef SR;
+  if (!checkThreadRoleListCommon(S, D, Attr, SR))
     D->addAttr(::new (S.Context) ThreadRoleUniqueAttr(Attr.getRange(),
                                                       S.Context, SR));
-  }
-  
 }
-
 
 enum ThreadRoleSubPartKind {
   TR_Leaf,
@@ -4817,25 +4803,18 @@ enum ThreadRoleSubPartKind {
   TR_Expr
 };
 
-
 static void handleThreadRoleDeclAttr(Sema &S, Decl *D,
                                      const AttributeList &Attr) {
-  StringRef SE = checkThreadRoleListCommon(S, D, Attr);
-  
-  if (SE.empty()) {
+  StringRef SR;
+  if (checkThreadRoleListCommon(S, D, Attr, SR))
     return;
-  }
-//  if (!checkAttributeNumArgs(S, Attr, 1))
-//    return;
   
 //  if (!isFunctionOrMethod(D))
 //    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
 //    << Attr.getRange() << Attr.getName() << ExpectedFunctionOrMethod;
   
-  
-
   D->addAttr(::new (S.Context) ThreadRoleDeclAttr(Attr.getRange(), S.Context,
-                                                  SE));
+                                                  SR));
 }
 
 static void handleThreadRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
