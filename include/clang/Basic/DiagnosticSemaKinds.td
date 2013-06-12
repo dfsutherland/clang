@@ -2175,6 +2175,8 @@ def err_thread_role_grant_attr_wrong_target : Error<
   "empty statements">;
 def err_thread_role_no_duplicates : Error<
   "duplicate name '%0' found in cert::%1">;
+def err_thrdrole_empty_list : Error<
+  "cert::%0 requires a non-empty list of thread roles">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,

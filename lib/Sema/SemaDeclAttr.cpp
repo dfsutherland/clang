@@ -4739,18 +4739,24 @@ static StringRef checkThreadRoleListCommon(Sema &S, Decl *D,
 
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "thread_role_decl" << 1;
+      << Attr.getName() << 1;
     return StringRef();
   }
   
-  // TODO: Check that string is comma-sep list of plausible thread role names
+  // Check that string is comma-sep list of plausible thread role names
+  // list of roles must be non-empty
+  if (SE->getLength() == 0) {
+    S.Diag(Attr.getLoc(), diag::err_thrdrole_empty_list)
+    << Attr.getName();
+    
+    return StringRef();
+  }
+
 
   // Parse out the comma separated values.
   SmallVector<StringRef,2> Roles;
   SE->getString().split(Roles, ",");
   
-  assert(Roles.size()>0); // we have at least one role
-
   llvm::StringMap<bool> Uniquer;
   bool ErrorFree = true;
   for (SmallVector<StringRef, 2>::iterator I = Roles.begin(), E = Roles.end();
@@ -4758,11 +4764,11 @@ static StringRef checkThreadRoleListCommon(Sema &S, Decl *D,
     const std::string ARole = (*I).trim();
     llvm::errs() << ARole.c_str() << '\n';
 
-    // TODO: Ensure that the args lack duplicates
+    // Ensure that the args lack duplicates
     bool &inserted = Uniquer[ARole];
     if (inserted) {
       ErrorFree = false;
-      // TODO: report the error
+      // Found a duplicate role
       S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates) << ARole << Attr.getName();
 
       continue;
@@ -5168,6 +5174,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_ThreadRoleUnique:
     handleThreadRoleUniqueAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_ThreadRoleIncompatible:
+    handleThreadRoleIncompatibleAttr(S, D, Attr);
     break;
 
   // Type safety attributes.
