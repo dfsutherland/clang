@@ -44,12 +44,12 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const AttributeList &A,
   return ::new (S.Context) FallThroughAttr(A.getRange(), S.Context);
 }
 
-static Attr *handleThreadRoleGrantAttr(Sema &S, Stmt *St, 
+static Attr *handleThreadRoleGrantAttr(Sema &S, Stmt *St,
                                        const AttributeList &Attr,
-                                      SourceRange Range) {
+                                       SourceRange Range) {
   assert(!Attr.isInvalid());
   if (!isa<CompoundStmt>(St)) {
-    S.Diag(Attr.getRange().getBegin(), 
+    S.Diag(Attr.getRange().getBegin(),
            diag::err_thread_role_grant_attr_wrong_target)
       << 0 << St->getLocStart();
     return 0;
