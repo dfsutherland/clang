@@ -4746,7 +4746,7 @@ static StringRef checkThreadRoleListCommon(Sema &S, Decl *D,
   // Check that string is comma-sep list of plausible thread role names
   // list of roles must be non-empty
   if (SE->getLength() == 0) {
-    S.Diag(Attr.getLoc(), diag::err_thrdrole_empty_list)
+    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list)
     << Attr.getName();
     
     return StringRef();
