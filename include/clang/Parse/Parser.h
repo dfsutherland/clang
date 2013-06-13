@@ -1902,7 +1902,6 @@ private:
   void MaybeParseCXX11Attributes(Declarator &D) {
     if ((getLangOpts().CPlusPlus11 || getLangOpts().CXXAttributes)
         && isCXX11AttributeSpecifier()) {
-      // Compound statements can now have leading annotations to support Thread Role Analysis
       ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
       ParseCXX11Attributes(attrs, &endLoc);
@@ -1913,7 +1912,6 @@ private:
                                 SourceLocation *endLoc = 0) {
     if ((getLangOpts().CPlusPlus11 || getLangOpts().CXXAttributes)
         && isCXX11AttributeSpecifier()) {
-     // Compound statements can now have leading annotations to support Thread Role Analysis
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
       ParseCXX11Attributes(attrsWithRange, endLoc);
       attrs.takeAllFrom(attrsWithRange);
@@ -1924,7 +1922,6 @@ private:
                                  bool OuterMightBeMessageSend = false) {
     if ((getLangOpts().CPlusPlus11 || getLangOpts().CXXAttributes)
         && isCXX11AttributeSpecifier(false, OuterMightBeMessageSend))
-      // Compound statements can now have leading annotations to support Thread Role Analysis
       ParseCXX11Attributes(attrs, endLoc);
   }
 

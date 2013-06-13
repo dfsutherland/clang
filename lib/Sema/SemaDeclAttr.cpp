@@ -28,7 +28,6 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Debug.h"
 using namespace clang;
 using namespace sema;
 
