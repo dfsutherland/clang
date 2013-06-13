@@ -4746,7 +4746,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
   // Check that string is a non-empty, comma-separated list of plausible thread
   // role names.
   if (SE->getLength() == 0) {
-    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list) << Attr.getName();    
+    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list) << Attr.getName();
     return true;
   }
 
@@ -4755,28 +4755,36 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
   SE->getString().split(Roles, ",");
   
   llvm::StringMap<bool> Uniquer;
-  bool Duplicates = false;
+  bool FoundErrors = false;
   for (SmallVector<StringRef, 2>::iterator I = Roles.begin(), E = Roles.end();
        I != E; ++I) {
     const std::string ARole = (*I).trim();
-
-    // Ensure that the args lack duplicates.
-    bool &inserted = Uniquer[ARole];
-    if (inserted) {
-      Duplicates = true;
-      // Found a duplicate role.
-      S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates)
+    llvm::errs() << '"' << ARole.c_str() << '"' << '\n';
+    
+    if (ARole.length() == 0) {
+      FoundErrors = false;
+      S.Diag(Attr.getLoc(), diag::err_threadrole_malformed_rolename)
         << ARole << Attr.getName();
-      continue;
+    } else {
+      // Ensure that the args lack duplicates
+      bool &inserted = Uniquer[ARole];
+      if (inserted) {
+        FoundErrors = false;
+        // Found a duplicate role
+        S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates)
+          << ARole << Attr.getName();
+        
+        continue;
+      }
+      inserted = true;
+      
+      // TODO: ??Build knowledge of names, both declared and not??
+      // not yet...
     }
-    inserted = true;
-
-    // TODO: ??Build knowledge of names, both declared and not??
-    // not yet...    
   }
 
   Role = SE->getString();
-  return Duplicates;
+  return FoundErrors;
 }
 
 static void handleThreadRoleIncompatibleAttr(Sema &S, Decl *D,
