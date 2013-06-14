@@ -2183,14 +2183,12 @@ def warn_thread_safety_beta : Warning<
 
 // Thread Role Analysis Errors
 def err_thread_role_grant_attr_wrong_target : Error<
-  "cert::thread_role_%select{grant|revoke}1 attribute is allowed only on "
-  "empty statements">;
-def err_thread_role_no_duplicates : Error<
-  "duplicate name '%0' found in cert::%1">;
+  "'%0' attribute is allowed only on empty statements">;
+def err_thread_role_no_duplicates : Error<"duplicate name '%0' found in '%1'">;
 def err_thread_role_empty_list : Error<
-  "cert::%0 requires a non-empty list of thread roles">;
+  "'%0' requires a non-empty list of thread roles">;
 def err_threadrole_malformed_rolename : Error<
-  "Malformed thread role name '%0' found in cert::%1">;
+  "Malformed thread role name '%0' found in %1">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,

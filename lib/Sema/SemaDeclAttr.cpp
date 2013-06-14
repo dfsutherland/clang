@@ -4739,14 +4739,15 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
 
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << Attr.getName()->getName() << 1;
+      << Attr.getFullName() << 1;
     return true;
   }
   
   // Check that string is a non-empty, comma-separated list of plausible thread
   // role names.
   if (SE->getLength() == 0) {
-    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list) << Attr.getName();
+    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list)
+      << Attr.getFullName();    
     return true;
   }
 
@@ -4764,7 +4765,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
     if (ARole.length() == 0) {
       FoundErrors = false;
       S.Diag(Attr.getLoc(), diag::err_threadrole_malformed_rolename)
-        << ARole << Attr.getName();
+        << ARole << Attr.getFullName();
     } else {
       // Ensure that the args lack duplicates
       bool &inserted = Uniquer[ARole];
@@ -4772,7 +4773,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
         FoundErrors = false;
         // Found a duplicate role
         S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates)
-          << ARole << Attr.getName();
+          << ARole << Attr.getFullName();
         
         continue;
       }
@@ -4831,7 +4832,7 @@ static void handleThreadRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   
   if (!isFunctionOrMethod(D))
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
-    << Attr.getRange() << Attr.getName() << ExpectedFunctionOrMethod;
+    << Attr.getRange() << Attr.getFullName() << ExpectedFunctionOrMethod;
   
   // Make sure that there is a string literal as the sections's single
   // argument.
@@ -4841,7 +4842,7 @@ static void handleThreadRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-    << "uuid" << 1;
+      << Attr.getFullName() << 1;
     return;
   }
    D->addAttr(::new (S.Context) ThreadRoleAttr(Attr.getRange(), S.Context,

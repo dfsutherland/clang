@@ -51,7 +51,7 @@ static Attr *handleThreadRoleGrantAttr(Sema &S, Stmt *St,
   if (!isa<CompoundStmt>(St)) {
     S.Diag(Attr.getRange().getBegin(),
            diag::err_thread_role_grant_attr_wrong_target)
-      << 0 << St->getLocStart();
+      << Attr.getFullName() << St->getLocStart();
     return 0;
   }
   // TODO: check that granted roles were declared somewhere
@@ -62,7 +62,7 @@ static Attr *handleThreadRoleGrantAttr(Sema &S, Stmt *St,
 
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "thread_role_grant" << 1;
+      << Attr.getFullName() << 1;
     return 0;
   }
 
@@ -74,6 +74,13 @@ static Attr *handleThreadRoleRevokeAttr(Sema &S, Stmt *St,
                                         const AttributeList &Attr,
                                         SourceRange Range) {
   assert(!Attr.isInvalid());
+  if (!isa<CompoundStmt>(St)) {
+    S.Diag(Attr.getRange().getBegin(),
+           diag::err_thread_role_grant_attr_wrong_target)
+      << Attr.getFullName() << St->getLocStart();
+    return 0;
+  }
+  // TODO: check that revoked roles were declared somewhere
 
   Expr *ArgExpr = Attr.getArg(0);
   ArgExpr = ArgExpr->IgnoreParenCasts();
@@ -81,7 +88,7 @@ static Attr *handleThreadRoleRevokeAttr(Sema &S, Stmt *St,
 
   if (!SE || !SE->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "thread_role_revoke" << 1;
+      << Attr.getFullName() << 1;
     return 0;
   }
 
