@@ -2183,7 +2183,7 @@ def warn_thread_safety_beta : Warning<
 
 // Thread Role Analysis Errors
 def err_thread_role_grant_attr_wrong_target : Error<
-  "'%0' attribute is allowed only on empty statements">;
+  "'%0' attribute is allowed only on compound statements">;
 def err_thread_role_no_duplicates : Error<"duplicate name '%0' found in '%1'">;
 def err_thread_role_empty_list : Error<
   "'%0' requires a non-empty list of thread roles">;
