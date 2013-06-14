@@ -2188,7 +2188,7 @@ def err_thread_role_no_duplicates : Error<"duplicate name '%0' found in '%1'">;
 def err_thread_role_empty_list : Error<
   "'%0' requires a non-empty list of thread roles">;
 def err_threadrole_malformed_rolename : Error<
-  "Malformed thread role name '%0' found in %1">;
+  "Malformed thread role name '%0' found in '%1'">;
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
