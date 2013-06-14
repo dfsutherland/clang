@@ -5152,7 +5152,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleAcquiredAfterAttr(S, D, Attr);
     break;
       
-  //Thread Role Analysis Attributes
+  // Thread Role Analysis Attributes
   case AttributeList::AT_ThreadRoleDecl:
     handleThreadRoleDeclAttr(S, D, Attr);
     break;
