@@ -1566,6 +1566,11 @@ public:
   static PrintingPolicy getPrintingPolicy(const ASTContext &Ctx,
                                           const Preprocessor &PP);
 
+  /// \brief Checks common thread role analysis semantics such as having a
+  /// non-empty list of roles, no duplicates, etc.  Returns the thread role
+  /// argument by reference.
+  bool CheckThreadRoleListCommon(const AttributeList &Attr, StringRef &Role);
+
   /// Scope actions.
   void ActOnPopScope(SourceLocation Loc, Scope *S);
   void ActOnTranslationUnitScope(Scope *S);

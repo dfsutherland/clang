@@ -56,18 +56,11 @@ static Attr *handleThreadRoleGrantAttr(Sema &S, Stmt *St,
   }
   // TODO: check that granted roles were declared somewhere
   
-  Expr *ArgExpr = Attr.getArg(0);
-  ArgExpr = ArgExpr->IgnoreParenCasts();
-  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
-
-  if (!SE || !SE->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << Attr.getFullName() << 1;
+  StringRef SR;
+  if (S.CheckThreadRoleListCommon(Attr, SR))
     return 0;
-  }
 
-  return ::new (S.Context) ThreadRoleGrantAttr(Attr.getRange(), S.Context,
-                                               SE->getString());
+  return ::new (S.Context) ThreadRoleGrantAttr(Attr.getRange(), S.Context, SR);
 }
 
 static Attr *handleThreadRoleRevokeAttr(Sema &S, Stmt *St,
@@ -82,18 +75,12 @@ static Attr *handleThreadRoleRevokeAttr(Sema &S, Stmt *St,
   }
   // TODO: check that revoked roles were declared somewhere
 
-  Expr *ArgExpr = Attr.getArg(0);
-  ArgExpr = ArgExpr->IgnoreParenCasts();
-  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
-
-  if (!SE || !SE->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << Attr.getFullName() << 1;
+  StringRef SR;
+  if (S.CheckThreadRoleListCommon(Attr, SR))
     return 0;
-  }
 
   return ::new (S.Context) ThreadRoleRevokeAttr(Attr.getRange(), S.Context,
-                                                SE->getString());
+                                                SR);
 }
 
 static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const AttributeList &A,

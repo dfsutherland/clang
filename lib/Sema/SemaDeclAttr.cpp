@@ -4724,11 +4724,10 @@ static void handleSelectAnyAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 //===----------------------------------------------------------------------===//
 
 
-static bool checkThreadRoleListCommon(Sema &S, Decl *D,
-                                      const AttributeList &Attr,
-                                      StringRef &Role) {
+bool Sema::CheckThreadRoleListCommon(const AttributeList &Attr,
+                                     StringRef &Role) {
   assert(!Attr.isInvalid());
-  if (!checkAttributeNumArgs(S, Attr, 1))
+  if (!checkAttributeNumArgs(*this, Attr, 1))
     return true;
 
   // Make sure that there is a string literal as the sections's single
@@ -4738,7 +4737,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
   StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
 
   if (!SE || !SE->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
+    Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
       << Attr.getFullName() << 1;
     return true;
   }
@@ -4746,7 +4745,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
   // Check that string is a non-empty, comma-separated list of plausible thread
   // role names.
   if (SE->getLength() == 0) {
-    S.Diag(Attr.getLoc(), diag::err_thread_role_empty_list)
+    Diag(Attr.getLoc(), diag::err_thread_role_empty_list)
       << Attr.getFullName();    
     return true;
   }
@@ -4764,7 +4763,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
     
     if (ARole.length() == 0) {
       FoundErrors = false;
-      S.Diag(Attr.getLoc(), diag::err_threadrole_malformed_rolename)
+      Diag(Attr.getLoc(), diag::err_threadrole_malformed_rolename)
         << ARole << Attr.getFullName();
     } else {
       // Ensure that the args lack duplicates
@@ -4772,7 +4771,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
       if (inserted) {
         FoundErrors = false;
         // Found a duplicate role
-        S.Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates)
+        Diag(Attr.getLoc(), diag::err_thread_role_no_duplicates)
           << ARole << Attr.getFullName();
         
         continue;
@@ -4791,7 +4790,7 @@ static bool checkThreadRoleListCommon(Sema &S, Decl *D,
 static void handleThreadRoleIncompatibleAttr(Sema &S, Decl *D,
                                              const AttributeList &Attr) {
   StringRef SR;
-  if (!checkThreadRoleListCommon(S, D, Attr, SR))
+  if (!S.CheckThreadRoleListCommon(Attr, SR))
     D->addAttr(::new (S.Context) ThreadRoleIncompatibleAttr(Attr.getRange(),
                                                             S.Context, SR));
 }
@@ -4799,7 +4798,7 @@ static void handleThreadRoleIncompatibleAttr(Sema &S, Decl *D,
 static void handleThreadRoleUniqueAttr(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
   StringRef SR;
-  if (!checkThreadRoleListCommon(S, D, Attr, SR))
+  if (!S.CheckThreadRoleListCommon(Attr, SR))
     D->addAttr(::new (S.Context) ThreadRoleUniqueAttr(Attr.getRange(),
                                                       S.Context, SR));
 }
@@ -4814,7 +4813,7 @@ enum ThreadRoleSubPartKind {
 static void handleThreadRoleDeclAttr(Sema &S, Decl *D,
                                      const AttributeList &Attr) {
   StringRef SR;
-  if (checkThreadRoleListCommon(S, D, Attr, SR))
+  if (S.CheckThreadRoleListCommon(Attr, SR))
     return;
   
 //  if (!isFunctionOrMethod(D))
@@ -4826,27 +4825,15 @@ static void handleThreadRoleDeclAttr(Sema &S, Decl *D,
 }
 
 static void handleThreadRoleAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  assert(!Attr.isInvalid());
-  if (!checkAttributeNumArgs(S, Attr, 1))
+  StringRef SR;
+  if (S.CheckThreadRoleListCommon(Attr, SR))
     return;
-  
+
   if (!isFunctionOrMethod(D))
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
     << Attr.getRange() << Attr.getFullName() << ExpectedFunctionOrMethod;
   
-  // Make sure that there is a string literal as the sections's single
-  // argument.
-  Expr *ArgExpr = Attr.getArg(0);
-  ArgExpr = ArgExpr->IgnoreParenCasts();
-  StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
-  
-  if (!SE || !SE->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << Attr.getFullName() << 1;
-    return;
-  }
-   D->addAttr(::new (S.Context) ThreadRoleAttr(Attr.getRange(), S.Context,
-                                               SE->getString()));
+  D->addAttr(::new (S.Context) ThreadRoleAttr(Attr.getRange(), S.Context, SR));
 }
 
 //===----------------------------------------------------------------------===//
