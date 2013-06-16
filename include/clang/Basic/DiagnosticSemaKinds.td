@@ -36,15 +36,15 @@ def err_typecheck_converted_constant_expression : Error<
 def err_typecheck_converted_constant_expression_disallowed : Error<
   "conversion from %0 to %1 is not allowed in a converted constant expression">;
 def err_expr_not_cce : Error<
-  "%select{case value|enumerator value|non-type template argument}0 "
+  "%select{case value|enumerator value|non-type template argument|array size}0 "
   "is not a constant expression">;
 def err_cce_narrowing : ExtWarn<
-  "%select{case value|enumerator value|non-type template argument}0 "
+  "%select{case value|enumerator value|non-type template argument|array size}0 "
   "%select{cannot be narrowed from type %2 to %3|"
   "evaluates to %2, which cannot be narrowed to type %3}1">,
   InGroup<CXX11Narrowing>, DefaultError;
 def err_cce_narrowing_sfinae : Error<
-  "%select{case value|enumerator value|non-type template argument}0 "
+  "%select{case value|enumerator value|non-type template argument|array size}0 "
   "%select{cannot be narrowed from type %2 to %3|"
   "evaluates to %2, which cannot be narrowed to type %3}1">;
 def err_ice_not_integral : Error<
@@ -4926,8 +4926,6 @@ let CategoryName = "Lambda Issue" in {
     "lambda expression in default argument cannot capture any entity">;
   def err_lambda_incomplete_result : Error<
     "incomplete result type %0 in lambda expression">;
-  def err_lambda_objc_object_result : Error<
-    "non-pointer Objective-C class type %0 in lambda expression result">;
   def err_noreturn_lambda_has_return_expr : Error<
     "lambda declared 'noreturn' should not return">;
   def warn_maybe_falloff_nonvoid_lambda : Warning<
