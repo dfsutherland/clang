@@ -7,13 +7,13 @@
 [[cert::thread_role_unique("GUI")]]
 [[cert::thread_role("GUI | Worker")]]
 void func() {
-  [[cert::thread_role_revoke("Worker")]] [[cert::thread_role_grant("Worker")]] {
+  [[cert::thread_role_revoke("GUI")]] [[cert::thread_role_grant("Worker")]] {
   }
 }
 
 [[cert::thread_role("GUI | Worker")]]
 void func2() {
-  if (true) [[cert::thread_role_grant("Worker")]] {
-  } else [[cert::thread_role_grant("GUI")]] {
+  if (true) [[cert::thread_role_revoke("GUI")]] [[cert::thread_role_grant("Worker")]] {
+  } else [[cert::thread_role_revoke("Worker")]] [[cert::thread_role_grant("GUI")]] {
   }
 }
