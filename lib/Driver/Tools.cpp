@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sys/stat.h>
 #include "Tools.h"
 #include "InputInfo.h"
 #include "SanitizerArgs.h"
@@ -15,29 +14,32 @@
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Version.h"
 #include "clang/Driver/Action.h"
-#include "clang/Driver/Arg.h"
-#include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Job.h"
-#include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Option/Arg.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Option/Option.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/PathV1.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
+#include <sys/stat.h>
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
 using namespace clang;
+using namespace llvm::opt;
 
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
@@ -2163,6 +2165,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue());
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_fpcc_struct_return, options::OPT_freg_struct_return)) {
+    if (getToolChain().getTriple().getArch() != llvm::Triple::x86) {
+      D.Diag(diag::err_drv_unsupported_opt_for_target)
+        << A->getSpelling() << getToolChain().getTriple().str();
+    } else if (A->getOption().matches(options::OPT_fpcc_struct_return)) {
+      CmdArgs.push_back("-fpcc-struct-return");
+    } else {
+      assert(A->getOption().matches(options::OPT_freg_struct_return));
+      CmdArgs.push_back("-freg-struct-return");
+    }
+  }
+
   if (Args.hasFlag(options::OPT_mrtd, options::OPT_mno_rtd, false))
     CmdArgs.push_back("-mrtd");
 
@@ -2494,6 +2508,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-split-dwarf=Enable");
   }
+
+
+  Args.AddAllArgs(CmdArgs, options::OPT_fdebug_types_section);
 
   Args.AddAllArgs(CmdArgs, options::OPT_ffunction_sections);
   Args.AddAllArgs(CmdArgs, options::OPT_fdata_sections);
